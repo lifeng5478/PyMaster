@@ -1,0 +1,2 @@
+# PyMaster
+python制作的上位机烧写MCU程序，用Pyserial做的串口上位机。可以直接烧写文件到MCU此为示例
