@@ -215,6 +215,9 @@ class mwindow(QMainWindow, Ui_mainWindow):
                         self.sigle1.emit(Reply_RX)
                         self.statusSigle.emit("指令头错误！")
                         # break
+                    else:
+                        print("接收回复指令错误！")
+                        break
                 else:
                     print("错误指令！")
                     self.statusSigle.emit("错误指令！")
