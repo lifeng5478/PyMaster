@@ -176,15 +176,37 @@ class mwindow(QMainWindow, Ui_mainWindow):
                 self.Pint1 = int(i * 100 / len(self.iBytes))
                 self.sigle2.emit(self.Pint1)
                 # print(i)
-                if (i + self.CHAR_TO_UP) >= len(self.iBytes):
+                if (i + self.CHAR_TO_UP) > len(self.iBytes):
                     print("发送完毕！")
                     self.NumToSend = 0
                     self.sigle2.emit(100)
                     self.SendB.setText("发送完毕！")
-                    self.statusSigle.emit("MCU升级成功！")
+                    while self.ser.in_waiting == 0:
+                        print("最后一帧！")
+                        self.sigle1.emit("最后一帧！")
+                        time.sleep(1)
+                    EndLog = self.ser.read(self.ser.in_waiting).decode()
+                    print(EndLog)
+                    if EndLog == ("#LS=FTT,OK,"+str(self.NumToSend)+'\r\n'):
+                        self.statusSigle.emit("MCU接收成功！")
                     time.sleep(1)
                     self.ser.write(stopCMD.encode())
-                    self.statusSigle.emit("App已启动！！")
+                    while self.ser.in_waiting == 0:
+                        print("等待跳转！")
+                        self.sigle1.emit("等待跳转！")
+                        time.sleep(1)
+                    UpdateLog = self.ser.read(self.ser.in_waiting)
+                    print(UpdateLog[12:30])
+                    if(len(UpdateLog)>30):
+                        if UpdateLog[12:30].decode() == "#LS>UPGRESLT,END\r\n":
+                            print("成功跳转，烧写成功！End！")
+                            self.sigle1.emit("跳转成功！烧写完毕！End！")
+                            self.statusSigle.emit("App已启动！！")
+                        else:
+                            self.statusSigle.emit("跳转未成功！！")
+                            self.sigle1.emit("跳转失败，请重新烧录！")
+                    else:
+                        print("未能成功结束跳转！")
                     break
                 nowTime = datetime.datetime.now()
                 # print(nowTime)
@@ -214,7 +236,6 @@ class mwindow(QMainWindow, Ui_mainWindow):
                         print("指令头错误！")
                         self.sigle1.emit(Reply_RX)
                         self.statusSigle.emit("指令头错误！")
-                        # break
                     else:
                         print("接收回复指令错误！")
                         break
