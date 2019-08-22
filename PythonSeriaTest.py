@@ -1,4 +1,4 @@
-import datetime, time
+import datetime,time
 import sys
 import serial
 import serial.tools.list_ports
@@ -82,6 +82,7 @@ class mwindow(QMainWindow, Ui_mainWindow):
                 if self.ser.isOpen():
                     self.statusSigle.emit("串口关闭失败！")
                 else:
+                    self.NumToSend = 0
                     self.statusSigle.emit("串口关闭成功！")
                 self.KeyNum1 = 0
         else:
@@ -98,6 +99,7 @@ class mwindow(QMainWindow, Ui_mainWindow):
                 self.t1.start()
                 # self.t1.join()
                 if self.t1.is_alive():
+                    self.NumToSend = 0
                     self.statusSigle.emit("发送中...")
                     self.SendB.setText("正在发送！")
 
@@ -121,7 +123,7 @@ class mwindow(QMainWindow, Ui_mainWindow):
             time.sleep(1)
         huiying = self.ser.read(self.ser.in_waiting).decode()
         self.sigle1.emit(huiying)
-        if huiying =="#LS=FT,OK\r\n":
+        if huiying =="#LS=UPGRADE,OK\r\n":
             header1 = '#LS=FT,"' + os.path.basename(self.openfile_name[0]) + '",' + str(self.openfile_size)
             print(header1.encode())
             self.sigle1.emit("第一阶段校验成功！")
@@ -195,19 +197,20 @@ class mwindow(QMainWindow, Ui_mainWindow):
                     # None
                     # print(os.times())
                     # self.statusBar.showMessage("发送超时！")
-                # print(self.ser.in_waiting)
+                print("反馈数据长度是：",self.ser.in_waiting)
+                #Reply_RX=self.ser.readall().decode()
+                #while(self.ser.in_waiting!=0)
                 Reply_RX = self.ser.read(self.ser.in_waiting).decode()
-                print(Reply_RX)
+                print("接收到的是：",Reply_RX)
                 if len(Reply_RX) > 9:
-
-                    if Reply_RX[8] == 'O' and Reply_RX[9] == 'K':
+                    if Reply_RX== ('#LS=FTT,OK,'+str(self.NumToSend)+'\r\n'):
                         print("接收成功！")
                         self.statusSigle.emit("接收成功！")
                         # self.MCUTextEdit.appendPlainText(str(tou))
                         self.sigle1.emit(Reply_RX)
                         i += self.CHAR_TO_UP
                         self.NumToSend += 1
-                    elif Reply_RX[8] == 'E' and Reply_RX[9] == 'r':
+                    elif Reply_RX[8:13]== 'Error':
                         print("指令头错误！")
                         self.sigle1.emit(Reply_RX)
                         self.statusSigle.emit("指令头错误！")
